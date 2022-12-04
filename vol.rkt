@@ -1,39 +1,39 @@
 #lang racket/base
+
 (require racket/system
          racket/port
-         racket/gui)
+         racket/gui/easy
+         racket/gui/easy/operator
+         )
 
 (define vol-level 50)
 
 (define (vol-change vol-new)
   (with-output-to-string
     (lambda ()
-      (system (string-append "amixer set Master " (number->string vol-new) "%")))))
+      (system/exit-code (string-append "amixer set Master " (number->string vol-new) "%")))))
 
 (define (vol-up)
-  (let ([vol-new (+ vol-level 5)])
-    (set! vol-level vol-new)
-    (vol-change vol-new)))
+  (if (<= vol-level 95)
+      (let ([vol-new (+ vol-level 5)])
+        (set! vol-level vol-new)
+        (vol-change vol-new))
+      (void)))
 
 (define (vol-down)
-  (let ([vol-new (- vol-level 5)])
-    (set! vol-level vol-new)
-    (vol-change vol-new)))
+  (if (>= vol-level 5)
+      (let ([vol-new (- vol-level 5)])
+        (set! vol-level vol-new)
+        (vol-change vol-new))
+      (void)))
 
-(define vol-win (new frame%
-                     [label "Svolumkontroll"]))
+(define (app)
+  (window
+   #:title "Svolumkontroll"
+   (vpanel
+    (hpanel
+     (button "+" vol-up)
+     (button "-" vol-down)))))
 
-(define vol-panel (new vertical-panel%
-                       [parent vol-win]))
-
-(define vol-up-button (new button%
-                           [parent vol-panel]
-                           [label "Höj"]
-                           [callback (lambda (button event)(void (vol-up)))]))
-
-(define vol-down-button (new button%
-                           [parent vol-panel]
-                           [label "Sänk"]
-                           [callback (lambda (button event)(void (vol-down)))]))
-
-(send vol-win show #t)
+(module+ main
+  (render (app)))
